@@ -65,7 +65,8 @@ class TransactionState {
       if (typeFilter != null && t.type != typeFilter) return false;
 
       // Account Filter
-      if (accountFilterId != null && t.accountId != accountFilterId) return false;
+      if (accountFilterId != null &&
+          !t.effectiveAllocations.any((a) => a.accountId == accountFilterId)) return false;
 
       // Category Filter
       if (categoryFilterId != null && t.categoryId != categoryFilterId) return false;
@@ -82,10 +83,8 @@ class TransactionState {
             .contains(query);
 
         // Account Name match
-        final account = accountNotifier.accounts
-            .where((a) => a.id == t.accountId)
-            .firstOrNull;
-        final accountMatch = account?.name.toLowerCase().contains(query) ?? false;
+        final accountMatch = t.effectiveAllocations.any((part) => accountNotifier.accounts
+            .any((a) => a.id == part.accountId && a.name.toLowerCase().contains(query)));
 
         // Category Name match
         final category = categoryNotifier.categories

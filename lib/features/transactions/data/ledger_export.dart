@@ -99,10 +99,11 @@ class LedgerExport {
     final loanMap = {for (final l in loans) l.id: l};
     final result = <LedgerEntry>[
       for (final t in transactions)
+        for (final part in t.effectiveAllocations)
         LedgerEntry(
-          id: t.id,
-          accountId: t.accountId,
-          accountName: accountNames[t.accountId] ?? 'Deleted account',
+          id: '${t.id}:${part.accountId}',
+          accountId: part.accountId,
+          accountName: accountNames[part.accountId] ?? 'Deleted account',
           categoryId: t.categoryId,
           category: categoryNames[t.categoryId] ?? 'Deleted category',
           person: '',
@@ -111,7 +112,7 @@ class LedgerExport {
           kind: t.type == TransactionType.income
               ? LedgerKind.income
               : LedgerKind.expense,
-          amountMinor: t.amountMinor,
+          amountMinor: part.amountMinor,
         ),
       for (final l in loans)
         LedgerEntry(

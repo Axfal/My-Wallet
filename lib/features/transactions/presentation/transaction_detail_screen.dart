@@ -204,8 +204,14 @@ class TransactionDetailScreen extends ConsumerWidget {
                           ? IconData(account.iconCodePoint, fontFamily: 'MaterialIcons')
                           : Icons.account_balance_rounded,
                       iconColor: account != null ? Color(account.colorValue) : AppColors.primary,
-                      label: 'Account / Wallet',
-                      value: account?.name ?? 'Unknown Account',
+                      label: transaction.isSplitPayment ? 'Payment accounts' : 'Account / Wallet',
+                      value: transaction.isSplitPayment
+                        ? transaction.effectiveAllocations.map((part) {
+                            final name = accountNotifier.accounts
+                              .where((a) => a.id == part.accountId).firstOrNull?.name ?? 'Unknown account';
+                            return '$name: ${CurrencyFormatter.formatMinor(part.amountMinor, symbol: settingsState.currencySymbol)}';
+                          }).join('\n')
+                        : account?.name ?? 'Unknown Account',
                     ),
                     const Divider(height: 24, color: AppColors.cardBorder),
                     _buildDetailRow(
@@ -455,4 +461,3 @@ class FullscreenImageViewer extends StatelessWidget {
     );
   }
 }
-

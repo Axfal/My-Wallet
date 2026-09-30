@@ -360,6 +360,7 @@ class _AddEditTransactionScreenState
                 label: 'Amount (${settingsState.currencySymbol})',
                 hint: '0',
                 controller: _amountController,
+                onChanged: (_) => setState(() {}),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 prefixIcon: Padding(
                   padding: const EdgeInsets.all(14.0),
@@ -381,6 +382,77 @@ class _AddEditTransactionScreenState
               ),
               const SizedBox(height: 16),
 
+              Text('Payment method', style: GoogleFonts.inter(fontSize: 13,
+                fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+              const SizedBox(height: 8),
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: false, label: Text('Full payment')),
+                  ButtonSegment(value: true, label: Text('Split payment')),
+                ],
+                selected: {_splitPayment},
+                onSelectionChanged: (selection) => setState(() {
+                  _splitPayment = selection.first;
+                  if (_splitPayment && _paymentDrafts.isEmpty) {
+                    _paymentDrafts.addAll([
+                      _PaymentDraft(accountId: _selectedAccountId), _PaymentDraft(),
+                    ]);
+                  }
+                }),
+              ),
+              const SizedBox(height: 8),
+              Text(_splitPayment ? 'Split the total across bank accounts, wallets or cash.'
+                  : 'Use one account for the full amount.',
+                style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary)),
+              const SizedBox(height: 16),
+              if (_splitPayment) ...[
+                for (var i = 0; i < _paymentDrafts.length; i++)
+                  Padding(padding: const EdgeInsets.only(bottom: 10), child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.cardBorder)),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Row(children: [
+                        Text('Payment ${i + 1}', style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w700, color: AppColors.primary)),
+                        const Spacer(),
+                        if (_paymentDrafts.length > 2) IconButton(
+                          tooltip: 'Remove payment', icon: const Icon(Icons.close_rounded),
+                          onPressed: () => setState(() => _paymentDrafts.removeAt(i).dispose())),
+                      ]),
+                      DropdownButtonFormField<String>(
+                        key: ValueKey('split-account-$i-${_paymentDrafts[i].accountId}'),
+                        initialValue: _paymentDrafts[i].accountId,
+                        isExpanded: true,
+                        decoration: const InputDecoration(labelText: 'Account / cash',
+                          border: OutlineInputBorder()),
+                        items: accountState.accounts.map((a) => DropdownMenuItem(
+                          value: a.id, child: Text(a.name, overflow: TextOverflow.ellipsis))).toList(),
+                        onChanged: (value) => setState(() => _paymentDrafts[i].accountId = value)),
+                      const SizedBox(height: 10),
+                      TextFormField(controller: _paymentDrafts[i].amount,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(labelText: 'Amount (${settingsState.currencySymbol})',
+                          border: const OutlineInputBorder()),
+                        onChanged: (_) => setState(() {})),
+                    ]),
+                  )),
+                OutlinedButton.icon(onPressed: accountState.accounts.length > _paymentDrafts.length
+                    ? () => setState(() => _paymentDrafts.add(_PaymentDraft())) : null,
+                  icon: const Icon(Icons.add_rounded), label: const Text('Add another account')),
+                const SizedBox(height: 6),
+                Builder(builder: (_) {
+                  final total = CurrencyFormatter.parseToMinor(_amountController.text) ?? 0;
+                  final allocated = _paymentDrafts.fold<int>(0, (sum, draft) =>
+                    sum + (CurrencyFormatter.parseToMinor(draft.amount.text) ?? 0));
+                  return Text('Allocated: ${CurrencyFormatter.formatMinor(allocated, symbol: settingsState.currencySymbol)}'
+                    ' / ${CurrencyFormatter.formatMinor(total, symbol: settingsState.currencySymbol)}',
+                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600,
+                      color: allocated == total ? AppColors.primary : AppColors.warning));
+                }),
+                const SizedBox(height: 16),
+              ] else ...[
               // Account Selector
               Text(
                 'Select Account / Wallet',
@@ -444,6 +516,7 @@ class _AddEditTransactionScreenState
                 ),
               const SizedBox(height: 16),
 
+              ],
               // Category Selector
               Text(
                 'Select Category',

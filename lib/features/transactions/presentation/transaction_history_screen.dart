@@ -658,7 +658,8 @@ class TransactionHistoryScreen extends ConsumerWidget {
                                         ),
                                       ),
                                     Text(
-                                      acc?.name ?? 'Unknown Account',
+                                    t.isSplitPayment ? '${t.effectiveAllocations.length} accounts'
+                                        : acc?.name ?? 'Unknown Account',
                                       style: GoogleFonts.inter(
                                         fontSize: 12,
                                         color: AppColors.textSecondary,
